@@ -3,11 +3,22 @@ session_start();
 require_once("vendor/autoload.php");
 
 
+
+
+
+
 use \Slim\Slim;
 use \Hcode\Page;
 use \Hcode\PageAdmin;
 use \Hcode\Model\User;
 use \Hcode\Model\Category;
+
+
+
+
+
+
+
 
 $app = new Slim();
 
@@ -272,6 +283,20 @@ $app->post("/admin/categories/:idcategory", function($idcategory){
 
 });
 
+$app->get("/categories/:idcategory", function($idcategory){
+
+	$category = new Category();
+
+	$category->get((int)$idcategory);
+
+	$page = new Page();
+
+	$page->setTpl("category", [
+		'category'=>$category->getValues(),
+		'products'=>[]
+	]);
+
+});
 
 $app->run();
 
