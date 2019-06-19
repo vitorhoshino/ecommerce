@@ -85,7 +85,7 @@ class Category extends Model{
 					SELECT a.idproduct
 					FROM tb_products a 
 					 INNER JOIN tb_productscategories b ON a.idproduct = b.idproduct
-					WHERE b.idcategory = idcategory
+					WHERE b.idcategory = :idcategory
 				);
 				",[
 					':idcategory'=>$this->getidcategory()	
@@ -98,7 +98,7 @@ class Category extends Model{
 					SELECT a.idproduct
 					FROM tb_products a 
 					 INNER JOIN tb_productscategories b ON a.idproduct = b.idproduct
-					WHERE b.idcategory = idcategory
+					WHERE b.idcategory = :idcategory
 					);
 				",[
 					':idcategory'=>$this->getidcategory()	
@@ -111,13 +111,14 @@ class Category extends Model{
 	public function getProductsPage($page = 1, $itemsPerPage = 3)
 	{
 
-		$start = ($page-1)* $itemsPerPage;
+		$start = ($page - 1)* $itemsPerPage;
 
 
 		$sql = new Sql();
 
 		$results = $sql->select(
-			"SELECT SQL_CALC_FOUND_ROWS * FROM tb_products a
+			"SELECT SQL_CALC_FOUND_ROWS * 
+			FROM tb_products a
 			INNER JOIN tb_productscategories b ON a.idproduct = b.idproduct
 			INNER JOIN tb_categories c ON c.idcategory = b.idcategory
 			WHERE c.idcategory = :idcategory

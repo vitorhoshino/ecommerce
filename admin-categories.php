@@ -100,6 +100,8 @@ $app->get("/admin/categories/:idcategory/products", function($idcategory){
 
 	$category->get((int)$idcategory);
 
+	$teste=$category->getProducts();
+
 	$page = new PageAdmin();
 
 	$page->setTpl("categories-products", [
