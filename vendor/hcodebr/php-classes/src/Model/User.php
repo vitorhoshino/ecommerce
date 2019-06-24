@@ -9,6 +9,8 @@ class User extends Model{
 
 	const SESSION = "User";
 	const SECRET ="HcodePhp7_Secret";
+	const ERROR = "UserError";
+	const ERROR_REGISTER = "UserErrorRegister";
 
 	public static function getFromSession()
 	{
@@ -93,7 +95,11 @@ class User extends Model{
 
 		if(User::checkLogin($inadmin)){
 
-			header("Location: /admin/login");
+			if($inadmin){
+				header("Location: /admin/login");
+			}else{
+			header("Location: /login");
+			}
 			exit;
 		}
 
@@ -227,12 +233,145 @@ class User extends Model{
 				));
 
 				$mailer->send();
+				
 				return $data;
 
 			}
-
 		}
 	}
+
+	public static function validForgotDecrypt($code)
+	{
+
+		base64_decode($code);
+
+		$idrecovery = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, User::SECRET, base64_decode($code), MCRYPT_MODE_ECB);
+
+		$sql = new Sql();
+
+			$results = $sql->select("
+				SELECT *
+				 FROM tb_userspasswordsrecoveries a 
+				INNER JOIN tb_users b USING(iduser)
+				INNER JOIN tb_persons c USING(idperson)
+				WHERE 
+					a.idrecovery = :idrecovery
+				    AND
+				    a.dtrecovery IS NULL
+				    AND 
+				    DATE_ADD(a.dtregister, INTERVAL 1 HOUR) >= NOW();
+			", array(
+				":idrecovery"=>$idrecovery
+			));
+
+			if (count($results)=== 0)
+			{
+
+				throw new \Exception("Não foi possível recuperar a senha");
+			}
+		else
+		{
+
+			return $results[0];
+		}
+	}
+
+	public static function setForgotUsed($idrecovery)
+	{
+
+		$sql = new Sql();
+
+		$sql->query("UPDATE tb_userspasswordsrecoveries SET dtrecovery = NOW() WHERE idrecovery = :idrecovery", array(
+			":idrecovery"=>$idrecovery
+			));
+	}
+
+	public function setPassword($password)
+	{
+
+		$sql = new Sql();
+
+		$sql->query("UPDATE tb_users SET despassword = :password WHERE iduser = :iduser", array(
+			":password"=>$password,
+			":iduser"=>$this->getiduser()
+		));
+
+	}
+
+
+			public static function setError($msg)
+			{
+
+				$_SESSION[User::ERROR] = $msg;
+
+			}
+
+			public static function getError()
+			{
+
+				$msg = (isset($_SESSION[User::ERROR])&& $_SESSION[User::ERROR]) ? $_SESSION[User::ERROR]: '';
+				User::clearError();
+
+				return $msg;
+
+			}
+
+			public static function clearError()
+			{
+
+				$_SESSION[User::ERROR] = NULL;
+
+			}
+
+
+//cadastro
+
+
+			public static function setErrorRegister($msg)
+			{
+
+				$_SESSION[User::ERROR_REGISTER] = $msg;
+
+			}
+
+			public static function getErrorRegister()
+			{
+
+				$msg = (isset($_SESSION[User::ERROR_REGISTER])&& $_SESSION[User::ERROR_REGISTER]) ? $_SESSION[User::ERROR_REGISTER]: '';
+				User::clearError();
+
+				return $msg;
+
+			}
+
+			public static function clearErrorrEGISTER()
+			{
+
+				$_SESSION[User::ERROR_REGISTER] = NULL;
+
+			}
+
+			public static function checkLoginExist($login)
+			{
+
+				$sql = new Sql();
+
+				$results = $sql->select("SELECT*FROM tb_users WHERE deslogin = :deslogin", ['deslogin'=>$login
+			]);
+
+				return (count($results)>0);
+
+			}
+
+			public static function getPasswordHash($password)
+			{
+
+				return password_hash($password, PASSWORD_DEFAULT, [
+					'cost'=>12
+				]);
+
+			}
+
 }
 
 ?>
