@@ -6,6 +6,9 @@ use \Hcode\Model\Category;
 use \Hcode\Model\Cart;
 use \Hcode\Model\Address;
 use \Hcode\Model\User;
+use \Hcode\Model\Order;
+use \Hcode\Model\OrderStatus;
+
 
 $app->get('/', function() {
 
@@ -226,7 +229,23 @@ $app->post("/checkout", function(){
 
 	$address->save();
 
-	header("Location: /order");
+	$cart = Cart::getFromSession();
+
+	$cart->getCalculateTotal();
+
+	$oder = new Order();
+
+	$order->setData([
+		'idcart'=>$cart->getidcart(),
+		'idaddress'=>$address->getidaddress(),
+		'iduser'=>$user->getiduser(),
+		'idstatus'=>OrderStatus::EM_ABERTO,
+		'vltotal'=>$cart->getvltotal()
+	]);
+
+	$order->save();
+
+	header("Location: /order".$order->getidorder());
 	exit;
 
 });
@@ -427,6 +446,65 @@ $app->post("/profile", function(){
 
 	header('Location: /profile');
 	exit;
+});
+
+$app->get("/order/:idorder", function($idorder){
+
+	User::verifyLogin(false);
+
+	$order = new Order();
+
+	$order->get((int)$idorder);
+
+	$page = new Page();
+
+	$page->setTpl("payment", [
+		'order' =>$order->getValues()
+	]);
+
+});
+
+$app->get("/boleto/:idorder", function($idorder){
+
+
+
+});
+
+$app->get("/profile/orders", function(){
+
+	User::verifyLogin(false);
+
+	$user = User::getFromSession();
+
+	$page = new Page();
+
+	$page->setTpl("profile-orders", [
+		'orders'=>$user->getOrders()
+	]);
+
+});
+
+$app->get("/profile/orders/:idorder", function($idorder){
+
+	User::verifyLogin(false);
+
+	$order = new Order();
+
+	$order->get((int)$idorder);
+
+	$cart = new Cart();
+
+	$cart->get((int)$order->getidcart());
+
+	$cart->getCalculateTotal();
+
+	$page = new Page();
+
+	$page->setTpl("profile-orders-detail", [
+		'order'=>$order->getValues(),
+		'cart'=>$cart->getValues(),
+		'products'=>$cart->getProducts()
+	]);
 });
 
 ?>
