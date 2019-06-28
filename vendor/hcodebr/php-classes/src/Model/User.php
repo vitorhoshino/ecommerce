@@ -18,8 +18,7 @@ class User extends Model{
 
 		$user = new User();
 
-		if(isset($_SESSION[User::SESSION])&& (int)$_SESSION[User::SESSION][':iduser'] > 0){
-
+		if(isset($_SESSION[User::SESSION])&& (int)$_SESSION[User::SESSION]['iduser'] > 0){
 
 			$user->setData($_SESSION[User::SESSION]);
 
@@ -64,7 +63,7 @@ class User extends Model{
 
 		$sql = new Sql();
 
-		$results = $sql->select("SELECT*FROM tb_users WHERE deslogin = :LOGIN", array(":LOGIN"=>$login
+		$results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b ON a.idperson = b.idperson WHERE a.deslogin = :LOGIN", array(":LOGIN"=>$login
 		));
 
 		if(count($results)===0)
@@ -94,12 +93,12 @@ class User extends Model{
 	public static function verifyLogin($inadmin = true)
 	{
 
-		if(User::checkLogin($inadmin)){
-
+		if (!User::checkLogin($inadmin)){
+	
 			if($inadmin){
 				header("Location: /admin/login");
 			}else{
-			header("Location: /login");
+				header("Location: /login");
 			}
 			exit;
 		}
@@ -162,7 +161,7 @@ class User extends Model{
 				":iduser"=>$this->getiduser(),
 				":desperson"=>$this->getdesperson(),
 				":deslogin"=>$this->getdeslogin(),
-				":despassword"=>$this->getdespassword(),
+				":despassword"=>User::getPasswordHash($this->getdespassword()),
 				":desemail"=>$this->getdesemail(),
 				":nrphone"=>$this->getnrphone(),
 				":inadmin"=>$this->getinadmin()
@@ -346,13 +345,13 @@ class User extends Model{
 
 				$msg = (isset($_SESSION[User::SUCCESS])&& $_SESSION[User::SUCCESS]) ? $_SESSION[User::SUCCESS]: '';
 			
-				User::clearSUCCESS();
+				User::clearSuccess();
 
 				return $msg;
 
 			}
 
-			public static function clearSUCCESS()
+			public static function clearSuccess()
 			{
 
 				$_SESSION[User::SUCCESS] = NULL;
@@ -374,7 +373,7 @@ class User extends Model{
 			{
 
 				$msg = (isset($_SESSION[User::ERROR_REGISTER])&& $_SESSION[User::ERROR_REGISTER]) ? $_SESSION[User::ERROR_REGISTER]: '';
-				User::clearError();
+				User::clearErrorRegister();
 
 				return $msg;
 
